@@ -1,7 +1,7 @@
 const http = require('http');
 const { URL } = require('url');
 
-const SIGN = '6d387baefc8f11119309_1773066522906';
+const SIGN = '926880e306682b55da16_1773070745287';
 
 function send(res, objOrStr) {
 const body = typeof objOrStr === 'string' ? objOrStr : JSON.stringify(objOrStr);
