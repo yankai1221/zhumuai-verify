@@ -10,7 +10,7 @@ app.get('/weidian_open.json', (req, res) => {
     if (toggle) {
         res.end('{"sign":"03569e0bc22383f525ff_1773063028822"}');
     } else {
-        res.end('{"sign":"791c4cd32082a6c144cc_1772978739877"}');
+        res.end('{"sign":"03569e0bc22383f525ff_1773063028822"}');
     }
     toggle = !toggle; 
 });
