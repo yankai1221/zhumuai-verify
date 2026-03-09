@@ -1,34 +1,39 @@
-const http = require('http');
-const { URL } = require('url');
+const express = require('express');
+const app = express();
 
-const SIGN = '6d387baefc8f11119309_1773066522906'; // 用当前最新 sign
-const OK = '{"errcode":0,"errmsg":"success"}';
+const SIGN = '6d387baefc8f11119309_1773066522906'; // 最新 sign
 
-const server = http.createServer((req, res) => {
-const u = new URL(req.url, 'http://localhost');
-const path = u.pathname;
-
-let body = OK;
-if (path === '/weidian_open.json') {
-body = JSON.stringify({ sign: SIGN });
-} else if (path === '/webhook/weidian') {
-body = OK;
-} else {
-body = '{"ok":true}';
+function jsonReply(res, obj) {
+const body = JSON.stringify(obj);
+res.status(200);
+res.set('Content-Type', 'application/json');
+res.set('Cache-Control', 'no-store');
+res.set('Content-Length', Buffer.byteLength(body));
+return res.send(body);
 }
 
-const buf = Buffer.from(body, 'utf8');
-
-res.statusCode = 200;
-res.setHeader('Content-Type', 'application/json'); // 不带 charset
-res.setHeader('Content-Length', String(buf.length)); // 禁止 chunked
-res.setHeader('Cache-Control', 'no-store');
-res.setHeader('Connection', 'close');
-res.setHeader('X-Content-Type-Options', 'nosniff');
-// 不设置 Content-Encoding（确保不是 gzip/br）
-
-res.end(buf);
+// 根验证文件
+app.get('/weidian_open.json', (req, res) => {
+return jsonReply(res, { sign: SIGN });
 });
 
-const PORT = process.env.PORT || 8080;
-server.listen(PORT, () => console.log('listening on', PORT));
+// 订阅消息（建议单独路由）
+app.all('/webhook/subscribe', (req, res) => {
+return jsonReply(res, {
+errcode: 0, errmsg: 'success',
+code: 0, msg: 'success',
+success: true
+});
+});
+
+// 授权回调（建议单独路由，GET/POST都兼容）
+app.all('/webhook/callback', (req, res) => {
+return jsonReply(res, {
+sign: SIGN,
+errcode: 0, errmsg: 'success',
+code: 0, msg: 'success',
+success: true
+});
+});
+
+app.listen(process.env.PORT || 8080);
