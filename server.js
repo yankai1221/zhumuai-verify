@@ -2,12 +2,12 @@ const http = require('http');
 const { URL } = require('url');
 
 const SIGN = '6d387baefc8f11119309_1773066522906';
-const OK = '{"errcode":0,"errmsg":"success"}';
 
-function send(res, body) {
+function send(res, objOrStr) {
+const body = typeof objOrStr === 'string' ? objOrStr : JSON.stringify(objOrStr);
 const buf = Buffer.from(body, 'utf8');
 res.statusCode = 200;
-res.setHeader('Content-Type', 'application/json'); // 无 charset
+res.setHeader('Content-Type', 'application/json');
 res.setHeader('Content-Length', String(buf.length));
 res.setHeader('Cache-Control', 'no-store');
 res.setHeader('Connection', 'close');
@@ -17,14 +17,25 @@ res.end(buf);
 http.createServer((req, res) => {
 const u = new URL(req.url, 'http://localhost');
 const p = u.pathname;
+console.log('[REQ]', req.method, req.url, req.headers['content-type']);
 
-console.log('[REQ]', req.method, req.url);
+if (p === '/weidian_open.json') return send(res, { sign: SIGN });
 
-if (p === '/weidian_open.json') return send(res, JSON.stringify({ sign: SIGN }));
-if (p === '/webhook/subscribe') return send(res, OK);
+let raw = '';
+req.on('data', c => raw += c);
+req.on('end', () => {
+// 如果对方发的是 JSON，就原样回显
+if (raw && (req.headers['content-type'] || '').includes('application/json')) {
+try {
+const obj = JSON.parse(raw);
+return send(res, obj);
+} catch {}
+}
 
-// 兜底也返回同样内容，避免任何 ok:true
-return send(res, OK);
-}).listen(process.env.PORT || 8080, () => {
-console.log('server started');
+// 兜底返回（双字段兼容）
+return send(res, {
+errcode: 0, errmsg: 'success',
+code: 0, msg: 'success'
 });
+});
+}).listen(process.env.PORT || 8080);
