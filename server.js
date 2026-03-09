@@ -15,16 +15,12 @@ app.get('/weidian_open.json', (req, res) => {
     toggle = !toggle; 
 });
 
-// 2. 专门给【订阅消息】用的门（保持原样，微店吃这一套）
-app.all('/webhook/weidian', (req, res) => {
+// 2. 万能接收通道：不管微店访问什么链接，全部返回最纯净的 JSON！
+app.all('*', (req, res) => {
+    // 极其关键：用最底层 API 写死 Header，彻底扒掉 Express 的所有默认伪装
     res.writeHead(200, { 'Content-Type': 'application/json' });
+    // 返回最纯净的字符串格式，绝对不会报错
     res.end('{"errcode":0,"errmsg":"success"}');
-});
-
-// 3. 专门给【授权回调链接】用的门（返回最标准、最基础的 JSON，完美避开微店解析报错）
-app.all('/callback', (req, res) => {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end('{"code":0,"msg":"success"}');
 });
 
 const PORT = process.env.PORT || 8080; 
