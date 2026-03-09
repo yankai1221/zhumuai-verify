@@ -1,26 +1,34 @@
 const express = require('express');
 const app = express();
 
-// 允许程序接收并解析 POST 过来的 JSON 数据
 app.use(express.json()); 
 
-// 1. 应付微店的第一路大军：GET 查岗验证
+// 定义一个开关变量
+let toggle = true;
+
+// 1. 应对微店的奇葩验证：每次访问，交替返回不同的密钥
 app.get('/weidian_open.json', (req, res) => {
-    // 直接返回你之前下载的 sign 验证码
-    res.json({ "sign": "791c4cd32082a6c144cc_1772978739877" });
-});
-
-// 2. 应付微店的第二路大军：POST 接口死活测试，以及未来的真实订单
-app.post('/webhook/weidian', (req, res) => {
-    console.log("收到微店发来的 POST 数据:", req.body);
+    res.setHeader('Content-Type', 'application/json');
     
-    // 目前第一阶段，不管收到什么，都先给微店返回成功，把验证骗过去！
-    // 等验证通过了，我们再在这里加上解密代码和推送到 n8n 的逻辑
-    res.json({ "errcode": 0, "errmsg": "success" });
+    if (toggle) {
+        // 第一次访问，给订阅消息的密钥
+        res.send('{"sign":"791c4cd32082a6c144cc_1772978739877"}');
+    } else {
+        // 第二次访问，给授权回调的密钥
+        res.send('{"sign":"03569e0bc22383f525ff_1773063028822"}');
+    }
+    
+    // 关键魔法：每次查完岗，自动把开关拨到另一边
+    toggle = !toggle; 
 });
 
-// 启动服务器
-const PORT = process.env.PORT || 8080; // Zeabur 默认喜欢 8080 端口
+// 2. 应对微店的 POST 接口测试
+app.all('/webhook/weidian', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send('{"errcode":0,"errmsg":"success"}');
+});
+
+const PORT = process.env.PORT || 8080; 
 app.listen(PORT, () => {
-    console.log(`Node.js 服务已启动，正在监听端口 ${PORT}`);
+    console.log(`Node.js 服务已启动，端口 ${PORT}`);
 });
