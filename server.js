@@ -3,7 +3,7 @@ const app = express();
 
 app.use(express.json()); 
 
-// 1. 验证域名文件 (加入轮询机制，把两个密钥都放进去，谁来查都能过！)
+// 1. 验证域名文件 (轮询机制：把两把钥匙都带上，无论是谁来查都能过)
 let toggle = true;
 app.get('/weidian_open.json', (req, res) => {
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -12,19 +12,19 @@ app.get('/weidian_open.json', (req, res) => {
     } else {
         res.end('{"sign":"791c4cd32082a6c144cc_1772978739877"}');
     }
-    toggle = !toggle; // 每次查完自动切换下一个
+    toggle = !toggle; 
 });
 
-// 2. 专门给【订阅消息】用的门（返回微店想要的严格 JSON）
+// 2. 专门给【订阅消息】用的门（保持原样，微店吃这一套）
 app.all('/webhook/weidian', (req, res) => {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end('{"errcode":0,"errmsg":"success"}');
 });
 
-// 3. 专门给【授权回调链接】用的门（返回纯文本网页，彻底避开 JSON 解析报错）
+// 3. 专门给【授权回调链接】用的门（返回最标准、最基础的 JSON，完美避开微店解析报错）
 app.all('/callback', (req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('success');
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end('{"code":0,"msg":"success"}');
 });
 
 const PORT = process.env.PORT || 8080; 
